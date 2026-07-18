@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 99%;
+    --foreground: 240 10% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 8%;
+    --primary: 246 60% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 10%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 95%;
+    --accent-foreground: 240 6% 10%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 90%;
+    --input: 240 6% 88%;
+    --ring: 246 60% 55%;
+    --radius: 0.625rem;
+    --chart-1: 246 60% 55%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 32 95% 55%;
+    --chart-4: 340 68% 56%;
+    --chart-5: 200 80% 45%;
+  }
+
+  .dark {
+    --background: 240 8% 6%;
+    --foreground: 240 6% 93%;
+    --card: 240 7% 8%;
+    --card-foreground: 240 6% 93%;
+    --popover: 240 7% 8%;
+    --popover-foreground: 240 6% 93%;
+    --primary: 246 70% 66%;
+    --primary-foreground: 240 8% 6%;
+    --secondary: 240 5% 13%;
+    --secondary-foreground: 240 6% 93%;
+    --muted: 240 5% 13%;
+    --muted-foreground: 240 5% 62%;
+    --accent: 240 5% 14%;
+    --accent-foreground: 240 6% 93%;
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 15%;
+    --input: 240 5% 18%;
+    --ring: 246 70% 66%;
+    --chart-1: 246 70% 66%;
+    --chart-2: 173 55% 48%;
+    --chart-3: 32 90% 60%;
+    --chart-4: 340 70% 62%;
+    --chart-5: 200 75% 55%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  ::selection {
+    @apply bg-primary/20;
+  }
+
+  /* Thin, subtle scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

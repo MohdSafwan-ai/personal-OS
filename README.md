@@ -173,6 +173,26 @@ The Express server serves both the API and the compiled React application in pro
 
 This setup works with platforms such as Render, Railway, Fly.io, or any provider that can run a Node.js process and supply environment variables.
 
+## Vercel frontend with Render backend
+
+The repository includes a root `vercel.json` configured for the deployed Render API at `https://personal-os-ahjy.onrender.com`.
+
+Vercel forwards every `/api/*` request to Render while keeping the request on the frontend's origin in the browser. This allows the existing HTTP-only authentication cookie flow to work without exposing the backend URL in client code or relying on cross-site cookies. The second rewrite sends all non-API routes to `index.html` so React Router deep links work on Vercel.
+
+Use these Vercel project settings:
+
+| Setting | Value |
+| --- | --- |
+| Root Directory | Repository root |
+| Framework Preset | Vite or Other |
+| Install Command | `npm install` |
+| Build Command | Read from `vercel.json` |
+| Output Directory | Read from `vercel.json` |
+
+No environment variable is required in Vercel for the API connection. In Render, set `CLIENT_URL` to the final Vercel production URL, such as `https://your-project.vercel.app`, and redeploy the backend. Keep `MONGODB_URI`, `JWT_ACCESS_SECRET`, and `JWT_REFRESH_SECRET` in Render only; never copy those secrets to Vercel.
+
+The Render service must remain available because Vercel acts only as a reverse proxy for `/api` requests. API responses are not cached by this configuration.
+
 ## Production behavior
 
 After `npm run build`:

@@ -175,7 +175,7 @@ This setup works with platforms such as Render, Railway, Fly.io, or any provider
 
 ## Vercel frontend with Render backend
 
-The repository includes a root `vercel.json` configured for the deployed Render API at `https://personal-os-ahjy.onrender.com`.
+The repository includes `client/vercel.json`, configured for the deployed Render API at `https://personal-os-ahjy.onrender.com`.
 
 Vercel forwards every `/api/*` request to Render while keeping the request on the frontend's origin in the browser. This allows the existing HTTP-only authentication cookie flow to work without exposing the backend URL in client code or relying on cross-site cookies. The second rewrite sends all non-API routes to `index.html` so React Router deep links work on Vercel.
 
@@ -183,7 +183,7 @@ Use these Vercel project settings:
 
 | Setting | Value |
 | --- | --- |
-| Root Directory | Repository root |
+| Root Directory | `client` |
 | Framework Preset | Vite or Other |
 | Install Command | `npm install` |
 | Build Command | Read from `vercel.json` |

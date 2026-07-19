@@ -6,6 +6,10 @@ import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { notFound } from "./middleware/not-found.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
+import { focusRouter } from "./modules/focus/focus.routes.js";
+import { habitsRouter } from "./modules/habits/habit.routes.js";
+import { notesRouter } from "./modules/notes/note.routes.js";
+import { tasksRouter } from "./modules/tasks/task.routes.js";
 
 export function createApp() {
   const app = express();
@@ -27,6 +31,10 @@ export function createApp() {
 
   // Feature routers are mounted here as modules are built.
   app.use("/api/auth", authRouter);
+  app.use("/api/tasks", tasksRouter);
+  app.use("/api/habits", habitsRouter);
+  app.use("/api/focus", focusRouter);
+  app.use("/api/notes", notesRouter);
 
   app.use(notFound);
   app.use(errorHandler);

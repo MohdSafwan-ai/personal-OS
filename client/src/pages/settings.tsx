@@ -63,7 +63,7 @@ function Stepper({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border bg-card p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+    <section className="rounded-[18px] border bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-6">
       <h2 className="mb-4 text-sm font-semibold">{title}</h2>
       {children}
     </section>
@@ -136,7 +136,7 @@ export default function SettingsPage() {
         </Section>
 
         <Section title="Appearance">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-3">
             {THEMES.map(({ value, label, icon: Icon }) => (
               <button
                 key={value}

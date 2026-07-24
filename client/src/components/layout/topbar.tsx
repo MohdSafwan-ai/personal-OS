@@ -2,11 +2,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
   BellOff,
+  CalendarDays,
   CheckSquare,
   LogOut,
   Menu,
   Moon,
   NotebookPen,
+  Plus,
   Repeat,
   Search,
   Settings,
@@ -108,6 +110,7 @@ export function Topbar() {
   const [open, setOpen] = useState<"notifications" | "profile" | null>(null);
   const [query, setQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
+  const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -162,11 +165,13 @@ export function Topbar() {
     return out.slice(0, 8);
   }, [query, tasks, habits, noteContent]);
 
-  const isDark = document.documentElement.classList.contains("dark");
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const showSearchPanel = searchFocused && query.trim().length > 0;
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-md md:px-6">
+    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-2 border-b bg-card/95 px-3 backdrop-blur-md sm:gap-3 sm:px-4 md:px-6">
       {/* Mobile hamburger */}
       <button
         onClick={() => useUiStore.getState().setMobileNavOpen(true)}
@@ -177,7 +182,7 @@ export function Topbar() {
       </button>
 
       {/* Search */}
-      <div className="relative w-full max-w-md" ref={searchWrapRef}>
+      <div className="relative min-w-0 flex-1 sm:max-w-[400px]" ref={searchWrapRef}>
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           ref={searchRef}
@@ -185,9 +190,9 @@ export function Topbar() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setSearchFocused(true)}
-          placeholder="Search tasks, habits, notes…"
+          placeholder="Search tasks, notes, habits…"
           className={cn(
-            "h-9 w-full rounded-lg border bg-muted/50 pl-9 pr-16 text-sm outline-none",
+            "h-9 w-full rounded-[10px] border bg-muted/70 pl-9 pr-3 text-xs outline-none sm:pr-16 sm:text-sm",
             "transition-all duration-200 placeholder:text-muted-foreground",
             "focus:border-ring focus:bg-background focus:shadow-[0_0_0_3px_hsl(var(--ring)/0.15)]"
           )}
@@ -237,12 +242,29 @@ export function Topbar() {
         </AnimatePresence>
       </div>
 
-      <div className="ml-auto flex items-center gap-1.5" ref={menuRef}>
+      <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5" ref={menuRef}>
+        <div className="mr-1 hidden items-center gap-1.5 whitespace-nowrap text-xs font-medium text-muted-foreground xl:flex">
+          <CalendarDays className="h-3.5 w-3.5 text-amber-500" />
+          {new Date().toLocaleDateString(undefined, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          })}
+        </div>
+
+        <button
+          onClick={() => navigate("/tasks")}
+          className="hidden h-9 items-center gap-1.5 rounded-[10px] bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-[0_1px_4px_rgba(91,92,235,0.3)] transition-colors hover:brightness-95 lg:flex"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          Quick Add
+        </button>
+
         {/* Theme toggle */}
         <button
           onClick={() => setTheme(isDark ? "light" : "dark")}
           aria-label="Toggle theme"
-          className="grid h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-all duration-150 hover:bg-accent hover:text-foreground active:scale-90"
+          className="hidden h-9 w-9 place-items-center rounded-lg text-muted-foreground transition-all duration-150 hover:bg-accent hover:text-foreground active:scale-90 sm:grid"
         >
           <AnimatePresence mode="wait" initial={false}>
             <motion.span
@@ -280,7 +302,7 @@ export function Topbar() {
             {open === "notifications" && (
               <motion.div
                 {...pop}
-                className="absolute right-0 top-11 w-80 overflow-hidden rounded-xl border bg-popover shadow-[0_16px_48px_-12px_rgba(0,0,0,0.18)]"
+                className="fixed left-3 right-3 top-[68px] overflow-hidden rounded-xl border bg-popover shadow-[0_16px_48px_-12px_rgba(0,0,0,0.18)] sm:absolute sm:left-auto sm:right-0 sm:top-11 sm:w-80"
               >
                 <div className="border-b px-4 py-2.5">
                   <span className="text-sm font-semibold">Notifications</span>
@@ -331,7 +353,7 @@ export function Topbar() {
             {open === "profile" && (
               <motion.div
                 {...pop}
-                className="absolute right-0 top-11 w-56 overflow-hidden rounded-xl border bg-popover p-1.5 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.18)]"
+                className="fixed left-3 right-3 top-[68px] overflow-hidden rounded-xl border bg-popover p-1.5 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.18)] sm:absolute sm:left-auto sm:right-0 sm:top-11 sm:w-56"
               >
                 <div className="border-b px-3 py-2.5">
                   <p className="text-sm font-semibold">{user?.name}</p>

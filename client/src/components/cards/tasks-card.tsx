@@ -1,8 +1,14 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckSquare, Plus, X } from "lucide-react";
+import { CheckSquare, Pencil, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { DashCard } from "@/components/ui/dash-card";
-import { useAddTask, useDeleteTask, useTasks, useToggleTask } from "@/lib/queries";
+import {
+  useAddTask,
+  useDeleteTask,
+  useRenameTask,
+  useTasks,
+  useToggleTask,
+} from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { useActivityStore } from "@/store/dashboard";
 
@@ -10,9 +16,12 @@ export function TasksCard() {
   const { data: tasks = [], isLoading } = useTasks();
   const addTask = useAddTask();
   const toggleTask = useToggleTask();
+  const renameTask = useRenameTask();
   const deleteTask = useDeleteTask();
   const logActivity = useActivityStore((s) => s.logActivity);
   const [draft, setDraft] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
 
   const remaining = tasks.filter((t) => !t.done).length;
 
@@ -102,18 +111,51 @@ export function TasksCard() {
                     )}
                   </AnimatePresence>
                 </button>
-                <span
-                  className={cn(
-                    "min-w-0 flex-1 truncate text-sm transition-all duration-200",
-                    task.done && "text-muted-foreground line-through"
-                  )}
+                {editingId === task.id ? (
+                  <form
+                    className="min-w-0 flex-1"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      const title = editDraft.trim();
+                      if (title && title !== task.title) {
+                        renameTask.mutate({ id: task.id, title });
+                      }
+                      setEditingId(null);
+                    }}
+                  >
+                    <input
+                      value={editDraft}
+                      onChange={(event) => setEditDraft(event.target.value)}
+                      onBlur={() => setEditingId(null)}
+                      autoFocus
+                      aria-label="Edit task title"
+                      className="h-7 w-full rounded-md border bg-background px-2 text-sm outline-none focus:border-ring"
+                    />
+                  </form>
+                ) : (
+                  <span
+                    className={cn(
+                      "min-w-0 flex-1 truncate text-sm transition-all duration-200",
+                      task.done && "text-muted-foreground line-through"
+                    )}
+                  >
+                    {task.title}
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    setEditingId(task.id);
+                    setEditDraft(task.title);
+                  }}
+                  aria-label="Edit task"
+                  className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground opacity-100 transition-all duration-150 hover:bg-accent hover:text-foreground sm:opacity-0 sm:group-hover/task:opacity-100"
                 >
-                  {task.title}
-                </span>
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
                 <button
                   onClick={() => deleteTask.mutate(task.id)}
                   aria-label="Delete task"
-                  className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 transition-all duration-150 hover:bg-destructive/10 hover:text-destructive group-hover/task:opacity-100"
+                  className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground opacity-100 transition-all duration-150 hover:bg-destructive/10 hover:text-destructive sm:opacity-0 sm:group-hover/task:opacity-100"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>

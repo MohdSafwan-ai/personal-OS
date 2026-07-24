@@ -3,15 +3,18 @@ import {
   Calendar,
   CheckSquare,
   ChevronsLeft,
-  Command,
   LayoutDashboard,
+  LogOut,
   NotebookPen,
   Repeat,
   Settings,
   Timer,
+  Globe2,
+  User,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth";
 import { useUiStore } from "@/store/ui";
 
 const NAV = [
@@ -19,6 +22,7 @@ const NAV = [
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/habits", label: "Habits", icon: Repeat },
   { to: "/focus", label: "Focus", icon: Timer },
+  { to: "/flowverse", label: "FlowVerse", icon: Globe2 },
   { to: "/calendar", label: "Calendar", icon: Calendar },
   { to: "/notes", label: "Notes", icon: NotebookPen },
 ];
@@ -47,13 +51,15 @@ export function MobileDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ duration: 0.3, ease: EASE }}
-            className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-card shadow-2xl md:hidden"
+            className="fixed inset-y-0 left-0 z-50 flex w-[min(86vw,280px)] flex-col border-r bg-card shadow-2xl md:hidden"
           >
-            <div className="flex h-14 items-center gap-2.5 border-b px-4">
-              <div className="grid h-7 w-7 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                <Command className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-semibold tracking-tight">Personal OS</span>
+            <div className="flex h-16 items-center gap-2.5 border-b px-5">
+              <img
+                src="/flowtrack-mark-512.png"
+                alt=""
+                className="h-9 w-9 shrink-0 object-contain"
+              />
+              <span className="text-[17px] font-bold tracking-[-0.02em]">FlowTrack</span>
             </div>
             <nav className="flex-1 space-y-1 p-2 pt-3">
               {NAV.map(({ to, label, icon: Icon, end }) => (
@@ -103,17 +109,21 @@ export function MobileDrawer() {
 export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggle = useUiStore((s) => s.toggleSidebar);
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
 
   return (
     <motion.aside
-      animate={{ width: collapsed ? 64 : 240 }}
+      animate={{ width: collapsed ? 68 : 228 }}
       transition={{ duration: 0.35, ease: EASE }}
-      className="relative z-30 hidden shrink-0 flex-col border-r bg-card/60 backdrop-blur md:flex"
+      className="relative z-30 hidden shrink-0 flex-col border-r bg-card md:flex"
     >
-      <div className="flex h-14 items-center gap-2.5 overflow-hidden border-b px-4">
-        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-          <Command className="h-4 w-4" />
-        </div>
+      <div className={cn("flex h-16 items-center gap-2.5 overflow-hidden border-b", collapsed ? "px-[18px]" : "px-5")}>
+        <img
+          src="/flowtrack-mark-512.png"
+          alt=""
+          className="h-9 w-9 shrink-0 object-contain"
+        />
         <AnimatePresence>
           {!collapsed && (
             <motion.span
@@ -121,15 +131,15 @@ export function Sidebar() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
               transition={{ duration: 0.2 }}
-              className="whitespace-nowrap text-sm font-semibold tracking-tight"
+              className="whitespace-nowrap text-[17px] font-bold tracking-[-0.02em]"
             >
-              Personal OS
+              FlowTrack
             </motion.span>
           )}
         </AnimatePresence>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-hidden p-2 pt-3">
+      <nav className="touch-scroll flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden p-2 pt-3">
         {NAV.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
@@ -138,7 +148,7 @@ export function Sidebar() {
             title={collapsed ? label : undefined}
             className={({ isActive }) =>
               cn(
-                "group relative flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm font-medium",
+                "group relative flex h-10 items-center gap-3 rounded-[10px] px-2.5 text-sm font-medium",
                 "transition-colors duration-150",
                 isActive
                   ? "bg-primary/10 text-primary"
@@ -191,6 +201,31 @@ export function Sidebar() {
           <Settings className="h-4 w-4 shrink-0 transition-transform duration-300 group-hover:rotate-45" />
           {!collapsed && <span className="whitespace-nowrap">Settings</span>}
         </NavLink>
+        <div
+          className={cn(
+            "flex min-w-0 items-center gap-2.5 rounded-[10px] px-2.5 py-2",
+            collapsed && "justify-center px-0"
+          )}
+        >
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#a78bfa] to-primary text-white">
+            <User className="h-3.5 w-3.5" />
+          </span>
+          {!collapsed && (
+            <>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-xs font-semibold">{user?.name}</span>
+                <span className="block truncate text-[10px] text-muted-foreground">{user?.email}</span>
+              </span>
+              <button
+                onClick={() => void logout()}
+                aria-label="Sign out"
+                className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </>
+          )}
+        </div>
         <button
           onClick={toggle}
           className={cn(

@@ -1,17 +1,17 @@
 import { motion } from "framer-motion";
-import { Coffee, Pause, Play, RotateCcw, SkipForward, Timer } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Coffee, Minus, Pause, Play, Plus, RotateCcw, SkipForward, Timer } from "lucide-react";
+import { useEffect } from "react";
 import { useFocusWeek, useLogFocus } from "@/lib/queries";
+import { toast } from "@/components/ui/toast";
 import { cn, formatClock, formatDuration, toDayKey } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
 import { useActivityStore } from "@/store/dashboard";
+import { useFocusTimerStore, type TimerPhase } from "@/store/focus-timer";
 
 const RADIUS = 88;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-type Phase = "focus" | "shortBreak" | "longBreak";
-
-const PHASE_LABEL: Record<Phase, string> = {
+const PHASE_LABEL: Record<TimerPhase, string> = {
   focus: "Focus",
   shortBreak: "Short break",
   longBreak: "Long break",
@@ -30,64 +30,66 @@ export default function FocusPage() {
   const logFocus = useLogFocus();
   const logActivity = useActivityStore((s) => s.logActivity);
   const { data: byDay = {} } = useFocusWeek();
+  const userId = useAuthStore((s) => s.user?.id);
+  const timer = useFocusTimerStore();
+  const {
+    phase,
+    focusMinutes,
+    durationSeconds: phaseSeconds,
+    remainingSeconds: remaining,
+    running,
+    completedFocus,
+    completionPending,
+  } = timer;
 
-  const [phase, setPhase] = useState<Phase>("focus");
-  const [completedFocus, setCompletedFocus] = useState(0);
-  const [running, setRunning] = useState(false);
-
-  const phaseSeconds =
-    phase === "focus"
-      ? pomodoro.focusMin * 60
-      : phase === "shortBreak"
+  const secondsFor = (target: TimerPhase): number =>
+    target === "focus"
+      ? focusMinutes * 60
+      : target === "shortBreak"
         ? pomodoro.shortBreakMin * 60
         : pomodoro.longBreakMin * 60;
 
-  const [remaining, setRemaining] = useState(phaseSeconds);
-  const remainingRef = useRef(remaining);
-  remainingRef.current = remaining;
-
-  // Adopt new durations when idle or when phase flips.
-  useEffect(() => {
-    if (!running) setRemaining(phaseSeconds);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phaseSeconds, phase]);
-
-  const nextPhaseAfterFocus = (doneCount: number): Phase =>
+  const nextPhaseAfterFocus = (doneCount: number): TimerPhase =>
     doneCount % pomodoro.longBreakEvery === 0 ? "longBreak" : "shortBreak";
 
   const advance = (skip = false) => {
     if (phase === "focus") {
-      const elapsed = phaseSeconds - remainingRef.current;
+      const elapsed = phaseSeconds - useFocusTimerStore.getState().remainingSeconds;
       const logged = skip ? elapsed : phaseSeconds;
       if (logged >= 60) {
-        logFocus.mutate(logged);
         logActivity("timer", `Finished a ${Math.round(logged / 60)} min focus session`);
+        logFocus.mutate(logged, {
+          onSuccess: () =>
+            toast(
+              skip
+                ? `Progress saved: +${Math.floor(logged / 60)} BP added to FlowVerse.`
+                : `Focus complete! +${Math.floor(logged / 60)} BP — your FlowVerse grew.`,
+              "success"
+            ),
+        });
       }
       const doneCount = completedFocus + (skip && logged < 60 ? 0 : 1);
-      setCompletedFocus(doneCount);
-      setPhase(nextPhaseAfterFocus(doneCount));
+      const next = nextPhaseAfterFocus(doneCount);
+      timer.advance(next, secondsFor(next), doneCount);
     } else {
-      setPhase("focus");
+      timer.advance("focus", focusMinutes * 60, completedFocus);
     }
-    setRunning(false);
   };
 
   useEffect(() => {
-    if (!running) return;
-    const interval = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          clearInterval(interval);
-          // Defer the phase change out of the state updater.
-          setTimeout(() => advance(false), 0);
-          return 0;
-        }
-        return r - 1;
-      });
-    }, 1000);
+    if (!userId) return;
+    timer.initialize(userId, pomodoro.focusMin, toDayKey());
+    const interval = window.setInterval(() => useFocusTimerStore.getState().sync(), 250);
     return () => clearInterval(interval);
+  }, [pomodoro.focusMin, timer.initialize, userId]);
+
+  useEffect(() => {
+    if (!completionPending) return;
+    timer.consumeCompletion();
+    advance(false);
+    // The persisted completion flag guarantees one completion per elapsed timer.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running]);
+  }, [completionPending]);
 
   const progress = phaseSeconds === 0 ? 0 : 1 - remaining / phaseSeconds;
   const todaySeconds = byDay[toDayKey()] ?? 0;
@@ -105,7 +107,7 @@ export default function FocusPage() {
         Focus
       </motion.h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        {pomodoro.focusMin} min focus · {pomodoro.shortBreakMin} min breaks · long break every{" "}
+        {focusMinutes} min focus · {pomodoro.shortBreakMin} min breaks · long break every{" "}
         {pomodoro.longBreakEvery} sessions
       </p>
 
@@ -113,16 +115,15 @@ export default function FocusPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-6 flex flex-col items-center rounded-xl border bg-card p-8 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+        className="mt-6 flex flex-col items-center rounded-[18px] border bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-8"
       >
         {/* Phase pills */}
         <div className="mb-6 flex gap-1 rounded-lg bg-muted p-1">
-          {(["focus", "shortBreak", "longBreak"] as Phase[]).map((p) => (
+          {(["focus", "shortBreak", "longBreak"] as TimerPhase[]).map((p) => (
             <button
               key={p}
               onClick={() => {
-                setPhase(p);
-                setRunning(false);
+                timer.selectPhase(p, secondsFor(p));
               }}
               className={cn(
                 "rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-150",
@@ -136,7 +137,32 @@ export default function FocusPage() {
           ))}
         </div>
 
-        <div className="relative h-56 w-56">
+        {phase === "focus" && !running && (
+          <div className="mb-5 flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2">
+            <button
+              onClick={() => timer.setFocusMinutes(focusMinutes - 5)}
+              disabled={focusMinutes <= 5}
+              aria-label="Reduce focus time by 5 minutes"
+              className="grid h-8 w-8 place-items-center rounded-md border bg-background text-muted-foreground hover:text-foreground disabled:opacity-40"
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+            <div className="min-w-24 text-center">
+              <span className="text-sm font-semibold tabular-nums">{focusMinutes} minutes</span>
+              <p className="text-[10px] text-muted-foreground">Set it here for this timer</p>
+            </div>
+            <button
+              onClick={() => timer.setFocusMinutes(focusMinutes + 5)}
+              disabled={focusMinutes >= 180}
+              aria-label="Increase focus time by 5 minutes"
+              className="grid h-8 w-8 place-items-center rounded-md border bg-background text-muted-foreground hover:text-foreground disabled:opacity-40"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        <div className="relative h-[min(14rem,72vw)] w-[min(14rem,72vw)]">
           <svg viewBox="0 0 200 200" className="h-full w-full -rotate-90">
             <circle cx="100" cy="100" r={RADIUS} fill="none" strokeWidth="8" className="stroke-muted" />
             <motion.circle
@@ -153,7 +179,7 @@ export default function FocusPage() {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-5xl font-bold tabular-nums tracking-tight">
+            <span className="text-[clamp(2.25rem,12vw,3rem)] font-bold tabular-nums tracking-tight">
               {formatClock(remaining)}
             </span>
             <span className="mt-1 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
@@ -165,7 +191,7 @@ export default function FocusPage() {
 
         <div className="mt-6 flex items-center gap-2">
           <button
-            onClick={() => setRunning((r) => !r)}
+            onClick={timer.toggle}
             className={cn(
               "flex h-11 items-center gap-2 rounded-lg px-6 text-sm font-semibold shadow-sm",
               "transition-all duration-150 hover:scale-[1.03] active:scale-95",
@@ -178,10 +204,7 @@ export default function FocusPage() {
             {running ? "Pause" : "Start"}
           </button>
           <button
-            onClick={() => {
-              setRunning(false);
-              setRemaining(phaseSeconds);
-            }}
+            onClick={timer.reset}
             aria-label="Reset timer"
             className="grid h-11 w-11 place-items-center rounded-lg border text-muted-foreground transition-all duration-150 hover:bg-accent hover:text-foreground active:scale-95"
           >
@@ -220,7 +243,7 @@ export default function FocusPage() {
       </motion.div>
 
       {/* Stats */}
-      <div className="mt-4 grid grid-cols-2 gap-4">
+      <div className="mt-4 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4">
         {[
           { label: "Focused today", value: todaySeconds, icon: Timer },
           { label: "This week", value: weekSeconds, icon: Timer },

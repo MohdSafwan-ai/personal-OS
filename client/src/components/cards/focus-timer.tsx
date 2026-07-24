@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
-import { Pause, Play, RotateCcw, Timer } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Minus, Pause, Play, Plus, RotateCcw, Timer } from "lucide-react";
+import { useEffect } from "react";
 import { DashCard } from "@/components/ui/dash-card";
+import { toast } from "@/components/ui/toast";
 import { useLogFocus } from "@/lib/queries";
-import { cn, formatClock } from "@/lib/utils";
+import { cn, formatClock, toDayKey } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
 import { useActivityStore } from "@/store/dashboard";
+import { useFocusTimerStore } from "@/store/focus-timer";
 
 const RADIUS = 54;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -14,49 +16,58 @@ export function FocusTimerCard() {
   const logFocus = useLogFocus();
   const logActivity = useActivityStore((s) => s.logActivity);
   // Focus length comes from the user's Pomodoro settings.
-  const focusMin = useAuthStore((s) => s.user?.settings.pomodoro.focusMin ?? 25);
-  const focusSeconds = focusMin * 60;
-  const [remaining, setRemaining] = useState(focusSeconds);
-  const [running, setRunning] = useState(false);
-  const remainingRef = useRef(remaining);
-  remainingRef.current = remaining;
+  const user = useAuthStore((s) => s.user);
+  const focusMin = user?.settings.pomodoro.focusMin ?? 25;
+  const timer = useFocusTimerStore();
+  const {
+    phase,
+    focusMinutes,
+    durationSeconds: focusSeconds,
+    remainingSeconds: remaining,
+    running,
+    completionPending,
+  } = timer;
 
-  // If the setting changes while idle, adopt the new duration.
-  useEffect(() => {
-    if (!running) setRemaining(focusSeconds);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusSeconds]);
-
-  const commit = (seconds: number) => {
-    logFocus.mutate(seconds);
+  const commit = (seconds: number, celebrate = true) => {
     logActivity("timer", `Finished a ${Math.round(seconds / 60)} min focus session`);
+    logFocus.mutate(seconds, {
+      onSuccess: () =>
+        toast(
+          celebrate
+            ? `Focus complete! +${Math.floor(seconds / 60)} BP — your FlowVerse grew.`
+            : `Progress saved: +${Math.floor(seconds / 60)} BP added to FlowVerse.`,
+          "success"
+        ),
+    });
   };
 
   useEffect(() => {
-    if (!running) return;
-    const interval = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          clearInterval(interval);
-          setRunning(false);
-          commit(focusSeconds);
-          return focusSeconds;
-        }
-        return r - 1;
-      });
-    }, 1000);
+    if (!user) return;
+    timer.initialize(user.id, focusMin, toDayKey());
+    const interval = window.setInterval(() => useFocusTimerStore.getState().sync(), 250);
     return () => clearInterval(interval);
+  }, [focusMin, timer.initialize, user?.id]);
+
+  useEffect(() => {
+    if (!completionPending) return;
+    timer.consumeCompletion();
+    if (phase === "focus") commit(focusSeconds);
+    timer.advance(
+      "focus",
+      focusMinutes * 60,
+      timer.completedFocus + (phase === "focus" ? 1 : 0)
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running]);
+  }, [completionPending]);
 
   const progress = 1 - remaining / focusSeconds;
 
   const reset = () => {
     // Log partial sessions of 1min+ so effort isn't lost.
-    const elapsed = focusSeconds - remainingRef.current;
-    if (elapsed >= 60) commit(elapsed);
-    setRunning(false);
-    setRemaining(focusSeconds);
+    const state = useFocusTimerStore.getState();
+    const elapsed = state.durationSeconds - state.remainingSeconds;
+    if (state.phase === "focus" && elapsed >= 60) commit(elapsed, false);
+    timer.selectPhase("focus", focusMinutes * 60);
   };
 
   return (
@@ -92,9 +103,33 @@ export function FocusTimerCard() {
         </div>
       </div>
 
+      {!running && (
+        <div className="mb-2 flex items-center gap-2">
+          <button
+            onClick={() => timer.setFocusMinutes(focusMinutes - 5)}
+            disabled={focusMinutes <= 5}
+            aria-label="Reduce focus time"
+            className="grid h-7 w-7 place-items-center rounded-md border text-muted-foreground disabled:opacity-40"
+          >
+            <Minus className="h-3.5 w-3.5" />
+          </button>
+          <span className="min-w-14 text-center text-xs font-semibold tabular-nums">
+            {focusMinutes} min
+          </span>
+          <button
+            onClick={() => timer.setFocusMinutes(focusMinutes + 5)}
+            disabled={focusMinutes >= 180}
+            aria-label="Increase focus time"
+            className="grid h-7 w-7 place-items-center rounded-md border text-muted-foreground disabled:opacity-40"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       <div className="mt-2 flex items-center gap-2">
         <button
-          onClick={() => setRunning((r) => !r)}
+          onClick={timer.toggle}
           className={cn(
             "flex h-9 items-center gap-2 rounded-lg px-4 text-sm font-medium shadow-sm",
             "transition-all duration-150 hover:scale-[1.03] active:scale-95",

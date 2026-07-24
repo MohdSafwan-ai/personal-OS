@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Command, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ApiRequestError } from "@/lib/api";
@@ -68,16 +68,19 @@ export default function AuthPage({ mode }: { mode: Mode }) {
         className="w-full max-w-sm"
       >
         <div className="mb-8 flex flex-col items-center">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
-            <Command className="h-6 w-6" />
-          </div>
+          <img
+            src="/flowtrack-mark-512.png"
+            alt="FlowTrack"
+            className="h-16 w-16 object-contain"
+          />
+          <span className="mt-1 text-lg font-extrabold tracking-[-0.02em]">FlowTrack</span>
           <h1 className="mt-4 text-xl font-bold tracking-tight">
             {isRegister ? "Create your account" : "Welcome back"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {isRegister
-              ? "Start organizing your day with Personal OS"
-              : "Sign in to your Personal OS"}
+              ? "Track. Focus. Grow. with FlowTrack"
+              : "Sign in to your FlowTrack workspace"}
           </p>
         </div>
 
@@ -168,7 +171,7 @@ export default function AuthPage({ mode }: { mode: Mode }) {
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          {isRegister ? "Already have an account? " : "New to Personal OS? "}
+          {isRegister ? "Already have an account? " : "New to FlowTrack? "}
           <Link
             to={isRegister ? "/login" : "/register"}
             className="font-medium text-primary transition-colors hover:underline"

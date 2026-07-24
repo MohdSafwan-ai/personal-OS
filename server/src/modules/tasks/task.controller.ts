@@ -9,9 +9,10 @@ import type {
 } from "./task.validation.js";
 
 export async function listTasks(req: Request, res: Response): Promise<void> {
-  const { day } = req.query as z.infer<typeof listTasksQuerySchema>;
+  const { day, from, to } = req.query as z.infer<typeof listTasksQuerySchema>;
   const filter: Record<string, unknown> = { userId: req.userId };
   if (day) filter.day = day;
+  if (from && to) filter.day = { $gte: from, $lte: to };
   const tasks = await Task.find(filter).sort({ createdAt: 1 });
   res.json({ tasks: tasks.map(toPublicTask) });
 }

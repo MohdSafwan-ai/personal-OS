@@ -1,6 +1,6 @@
-# Personal OS
+# FlowTrack
 
-Personal OS is a full-stack productivity dashboard for managing daily work in one place. It combines tasks, habit streaks, Pomodoro focus sessions, calendar planning, quick notes, and productivity insights behind secure account authentication.
+FlowTrack is a full-stack productivity dashboard for managing daily work in one place. It combines tasks, habit streaks, Pomodoro focus sessions, calendar planning, quick notes, and productivity insights behind secure account authentication.
 
 ## Features
 
@@ -30,7 +30,7 @@ Personal OS is a full-stack productivity dashboard for managing daily work in on
 ## Project structure
 
 ```text
-personal-os/
+flowtrack/
 ├── client/                 # React single-page application
 │   └── src/
 │       ├── components/     # Dashboard cards, layout, and reusable UI

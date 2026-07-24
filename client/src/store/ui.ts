@@ -18,6 +18,7 @@ function applyTheme(theme: Theme) {
     theme === "dark" ||
     (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.classList.toggle("dark", dark);
+  document.documentElement.style.colorScheme = dark ? "dark" : "light";
 }
 
 export const useUiStore = create<UiState>()(
@@ -36,6 +37,9 @@ export const useUiStore = create<UiState>()(
     {
       name: "personal-os-ui",
       partialize: (s) => ({ theme: s.theme, sidebarCollapsed: s.sidebarCollapsed }),
+      onRehydrateStorage: () => (state) => {
+        if (state) applyTheme(state.theme);
+      },
     }
   )
 );

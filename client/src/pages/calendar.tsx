@@ -17,11 +17,14 @@ function monthCells(year: number, month: number): (string | null)[] {
   return cells;
 }
 
-/** All tasks (no day filter) grouped by day — powers the month indicators. */
-function useAllTasks() {
+/** Fetch only the visible month instead of the user's entire task history. */
+function useMonthTasks(year: number, month: number) {
+  const from = toDayKey(new Date(year, month, 1));
+  const to = toDayKey(new Date(year, month + 1, 0));
   return useQuery({
-    queryKey: ["tasks", "all"],
-    queryFn: () => api<{ tasks: ApiTask[] }>("/api/tasks").then((r) => r.tasks),
+    queryKey: ["tasks", "month", from, to],
+    queryFn: () =>
+      api<{ tasks: ApiTask[] }>(`/api/tasks?from=${from}&to=${to}`).then((r) => r.tasks),
   });
 }
 
@@ -30,7 +33,7 @@ export default function CalendarPage() {
   const today = toDayKey();
   const [view, setView] = useState({ year: now.getFullYear(), month: now.getMonth() });
   const [selected, setSelected] = useState<string>(today);
-  const { data: tasks = [] } = useAllTasks();
+  const { data: tasks = [] } = useMonthTasks(view.year, view.month);
 
   const byDay = useMemo(() => {
     const map = new Map<string, ApiTask[]>();
@@ -61,7 +64,7 @@ export default function CalendarPage() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="mb-6 flex items-end justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
             initial={{ opacity: 0, y: 8 }}
@@ -73,7 +76,7 @@ export default function CalendarPage() {
           </motion.h1>
           <p className="mt-1 text-sm text-muted-foreground">{title}</p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 self-end sm:self-auto">
           <button
             onClick={() => shift(-1)}
             aria-label="Previous month"
@@ -107,9 +110,9 @@ export default function CalendarPage() {
           initial={{ opacity: 0, x: 8 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+          className="overflow-x-auto rounded-[18px] border bg-card p-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-4"
         >
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid min-w-[280px] grid-cols-7 gap-0.5 sm:gap-1">
             {WEEKDAYS.map((d) => (
               <span
                 key={d}

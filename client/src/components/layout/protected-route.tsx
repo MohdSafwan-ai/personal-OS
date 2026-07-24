@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { Command } from "lucide-react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/auth";
 
@@ -10,9 +9,13 @@ function BootScreen() {
       <motion.div
         animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }}
         transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-        className="grid h-12 w-12 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+        className="grid h-16 w-16 place-items-center"
       >
-        <Command className="h-6 w-6" />
+        <img
+          src="/flowtrack-mark-512.png"
+          alt="Loading FlowTrack"
+          className="h-full w-full object-contain"
+        />
       </motion.div>
     </div>
   );

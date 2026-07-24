@@ -83,12 +83,12 @@ function HabitRow({ habit }: { habit: ApiHabit }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-      className="rounded-xl border bg-card p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.1)]"
+      className="rounded-[18px] border bg-card p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-shadow duration-300 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.1)] sm:p-5"
     >
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         {editing ? (
           <form
-            className="flex flex-1 items-center gap-2"
+            className="flex min-w-0 flex-1 flex-wrap items-center gap-2"
             onSubmit={(e) => {
               e.preventDefault();
               const name = nameDraft.trim();
@@ -100,7 +100,7 @@ function HabitRow({ habit }: { habit: ApiHabit }) {
             <input
               value={emojiDraft}
               onChange={(e) => setEmojiDraft(e.target.value)}
-              className={cn(inputCls, "w-14 text-center")}
+              className={cn(inputCls, "w-14 shrink-0 text-center")}
               maxLength={4}
               aria-label="Emoji"
             />
@@ -108,7 +108,7 @@ function HabitRow({ habit }: { habit: ApiHabit }) {
               value={nameDraft}
               onChange={(e) => setNameDraft(e.target.value)}
               autoFocus
-              className={inputCls}
+              className={cn(inputCls, "min-w-[150px] flex-1")}
               aria-label="Habit name"
             />
             <button
@@ -133,7 +133,7 @@ function HabitRow({ habit }: { habit: ApiHabit }) {
                 {habit.streak} day streak · {habit.checkins.length} check-ins in 90 days
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="ml-auto flex max-w-full shrink-0 items-center gap-1 max-[480px]:basis-full max-[480px]:justify-end">
               <button
                 onClick={() => {
                   setEditing(true);

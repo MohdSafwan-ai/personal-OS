@@ -42,30 +42,62 @@ export async function rotateRefreshToken(
   presented: string
 ): Promise<{ token: string; userId: string } | null> {
   const presentedHash = hashToken(presented);
-  const existing = await RefreshToken.findOne({ tokenHash: presentedHash });
+  const next = randomBytes(64).toString("hex");
+  const nextHash = hashToken(next);
+  const now = new Date();
 
-  if (!existing || existing.expiresAt < new Date()) return null;
+  // Claim the token in one database operation. This prevents two tabs (or two
+  // servers) from both rotating the same still-active token.
+  const existing = await RefreshToken.findOneAndUpdate(
+    {
+      tokenHash: presentedHash,
+      revokedAt: null,
+      expiresAt: { $gt: now },
+    },
+    {
+      $set: {
+        revokedAt: now,
+        replacedByHash: nextHash,
+      },
+    },
+    { new: true }
+  );
 
-  if (existing.revokedAt) {
+  if (!existing) {
+    const replayed = await RefreshToken.findOne({ tokenHash: presentedHash });
+    if (!replayed || replayed.expiresAt <= now) return null;
     // Token reuse — someone replayed an old token. Kill the whole family.
+    // Clear the replacement marker so an in-flight winning rotation can detect
+    // the replay even if it has not created its successor document yet.
+    await RefreshToken.updateOne(
+      { _id: replayed._id },
+      { $set: { replacedByHash: null } }
+    );
     await RefreshToken.updateMany(
-      { familyId: existing.familyId, revokedAt: null },
-      { revokedAt: new Date() }
+      { familyId: replayed.familyId, revokedAt: null },
+      { revokedAt: now }
     );
     return null;
   }
 
-  const next = randomBytes(64).toString("hex");
-  const nextHash = hashToken(next);
   await RefreshToken.create({
     userId: existing.userId,
     tokenHash: nextHash,
     familyId: existing.familyId,
     expiresAt: refreshExpiry(),
   });
-  existing.revokedAt = new Date();
-  existing.replacedByHash = nextHash;
-  await existing.save();
+
+  const claimStillValid = await RefreshToken.exists({
+    _id: existing._id,
+    replacedByHash: nextHash,
+  });
+  if (!claimStillValid) {
+    await RefreshToken.updateMany(
+      { familyId: existing.familyId, revokedAt: null },
+      { revokedAt: new Date() }
+    );
+    return null;
+  }
 
   return { token: next, userId: existing.userId.toString() };
 }

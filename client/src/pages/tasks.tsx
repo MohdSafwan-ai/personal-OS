@@ -53,7 +53,7 @@ export default function TasksPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="mb-6 flex items-end justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
             initial={{ opacity: 0, y: 8 }}
@@ -67,7 +67,7 @@ export default function TasksPage() {
             {done} of {tasks.length} done · {dayLabel}
           </p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 self-end sm:self-auto">
           <button
             onClick={() => setDay((d) => shiftDay(d, -1))}
             aria-label="Previous day"
@@ -200,7 +200,7 @@ export default function TasksPage() {
                     </span>
                   )}
 
-                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover/task:opacity-100">
+                  <div className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity duration-150 sm:opacity-0 sm:group-hover/task:opacity-100">
                     <button
                       onClick={() => {
                         setEditingId(task.id);

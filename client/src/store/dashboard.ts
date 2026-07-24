@@ -9,7 +9,9 @@ export interface ActivityItem {
 }
 
 interface ActivityState {
+  ownerId: string | null;
   activity: ActivityItem[];
+  initializeOwner: (ownerId: string) => void;
   logActivity: (kind: ActivityItem["kind"], text: string) => void;
 }
 
@@ -24,7 +26,12 @@ const uid = () => `${Date.now().toString(36)}-${(counter++).toString(36)}`;
 export const useActivityStore = create<ActivityState>()(
   persist(
     (set) => ({
+      ownerId: null,
       activity: [],
+      initializeOwner: (ownerId) =>
+        set((state) =>
+          state.ownerId === ownerId ? state : { ownerId, activity: [] }
+        ),
       logActivity: (kind, text) =>
         set((s) => ({
           activity: [{ id: uid(), text, at: Date.now(), kind }, ...s.activity].slice(0, 30),

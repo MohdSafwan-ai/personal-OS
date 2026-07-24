@@ -1,8 +1,8 @@
 {
-  "name": "personal-os",
+  "name": "flowtrack",
   "private": true,
   "version": "1.0.0",
-  "description": "Personal Operating System — productivity analytics app",
+  "description": "FlowTrack — track, focus, and grow with one productivity workspace",
   "workspaces": [
     "client",
     "server"

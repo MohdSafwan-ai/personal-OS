@@ -3,8 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Personal OS — your productivity command center" />
-    <title>Personal OS</title>
+    <meta name="description" content="FlowTrack — track your work, focus deeply, and grow consistently." />
+    <meta name="theme-color" content="#050505" />
+    <link rel="icon" type="image/png" href="/flowtrack-favicon.png" />
+    <link rel="apple-touch-icon" href="/flowtrack-mark-512.png" />
+    <title>FlowTrack — Track. Focus. Grow.</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -21,7 +24,8 @@
             theme === "dark" ||
             (theme !== "light" &&
               window.matchMedia("(prefers-color-scheme: dark)").matches);
-          if (dark) document.documentElement.classList.add("dark");
+          document.documentElement.classList.toggle("dark", dark);
+          document.documentElement.style.colorScheme = dark ? "dark" : "light";
         } catch (e) {}
       })();
     </script>

@@ -36,7 +36,7 @@ export default function NotesPage() {
 
   return (
     <div className="mx-auto flex h-full max-w-3xl flex-col">
-      <div className="mb-4 flex items-end justify-between">
+      <div className="mb-4 flex items-end justify-between gap-3">
         <div>
           <motion.h1
             initial={{ opacity: 0, y: 8 }}
@@ -68,7 +68,7 @@ export default function NotesPage() {
         onChange={(e) => setDraft(e.target.value)}
         placeholder="Write anything — ideas, plans, journal entries…"
         className={cn(
-          "min-h-[60vh] w-full flex-1 resize-none rounded-xl border bg-card p-6 text-[15px] leading-relaxed outline-none",
+          "min-h-[60vh] w-full flex-1 resize-none rounded-[18px] border bg-card p-4 text-sm leading-relaxed outline-none sm:p-6 sm:text-[15px]",
           "shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200",
           "placeholder:text-muted-foreground focus:border-ring focus:shadow-[0_0_0_3px_hsl(var(--ring)/0.15)]"
         )}

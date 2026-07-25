@@ -29,16 +29,28 @@ export function FocusTimerCard() {
   } = timer;
 
   const commit = (seconds: number, celebrate = true) => {
+    if (seconds < 60) return; // minimum 1 minute to earn BP
     logActivity("timer", `Finished a ${Math.round(seconds / 60)} min focus session`);
     logFocus.mutate(seconds, {
-      onSuccess: () =>
+      onSuccess: () => {
+        timer.markCommitted(seconds);
         toast(
           celebrate
             ? `Focus complete! +${Math.floor(seconds / 60)} BP — your FlowVerse grew.`
             : `Progress saved: +${Math.floor(seconds / 60)} BP added to FlowVerse.`,
           "success"
-        ),
+        );
+      },
     });
+  };
+
+  /** Commit only the uncommitted elapsed portion (avoids double-counting). */
+  const commitUncommitted = (celebrate = true) => {
+    const state = useFocusTimerStore.getState();
+    if (state.phase !== "focus") return;
+    const elapsed = state.durationSeconds - state.remainingSeconds;
+    const uncommitted = elapsed - state.committedSeconds;
+    if (uncommitted >= 60) commit(uncommitted, celebrate);
   };
 
   useEffect(() => {
@@ -51,7 +63,12 @@ export function FocusTimerCard() {
   useEffect(() => {
     if (!completionPending) return;
     timer.consumeCompletion();
-    if (phase === "focus") commit(focusSeconds);
+    if (phase === "focus") {
+      // commit only the uncommitted portion of the completed session
+      const state = useFocusTimerStore.getState();
+      const uncommitted = focusSeconds - state.committedSeconds;
+      if (uncommitted >= 60) commit(uncommitted);
+    }
     timer.advance(
       "focus",
       focusMinutes * 60,
@@ -62,11 +79,14 @@ export function FocusTimerCard() {
 
   const progress = 1 - remaining / focusSeconds;
 
+  const handleToggle = () => {
+    // Pausing — commit whatever uncommitted time has elapsed
+    if (running) commitUncommitted(false);
+    timer.toggle();
+  };
+
   const reset = () => {
-    // Log partial sessions of 1min+ so effort isn't lost.
-    const state = useFocusTimerStore.getState();
-    const elapsed = state.durationSeconds - state.remainingSeconds;
-    if (state.phase === "focus" && elapsed >= 60) commit(elapsed, false);
+    commitUncommitted(false);
     timer.selectPhase("focus", focusMinutes * 60);
   };
 
@@ -129,7 +149,7 @@ export function FocusTimerCard() {
 
       <div className="mt-2 flex items-center gap-2">
         <button
-          onClick={timer.toggle}
+          onClick={handleToggle}
           className={cn(
             "flex h-9 items-center gap-2 rounded-lg px-4 text-sm font-medium shadow-sm",
             "transition-all duration-150 hover:scale-[1.03] active:scale-95",

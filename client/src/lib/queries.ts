@@ -94,6 +94,12 @@ export function useToggleTask(day = toDayKey()) {
       return { prev };
     },
     onError: (_e, _v, ctx) => qc.setQueryData(["tasks", day], ctx?.prev),
+    onSuccess: (_data, { done }) => {
+      if (done) {
+        api("/api/focus", { method: "POST", body: { day: toDayKey(), seconds: 300 } })
+          .then(() => qc.invalidateQueries({ queryKey: ["focus"] }));
+      }
+    },
     onSettled: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 }
@@ -163,6 +169,12 @@ export function useCheckinHabit() {
       return { prev };
     },
     onError: (_e, _v, ctx) => qc.setQueryData(["habits"], ctx?.prev),
+    onSuccess: (_data, { done }) => {
+      if (done) {
+        api("/api/focus", { method: "POST", body: { day: toDayKey(), seconds: 600 } })
+          .then(() => qc.invalidateQueries({ queryKey: ["focus"] }));
+      }
+    },
     onSettled: () => qc.invalidateQueries({ queryKey: ["habits"] }),
   });
 }

@@ -14,6 +14,7 @@ interface FocusTimerState {
   completedFocus: number;
   sessionDay: string;
   completionPending: boolean;
+  committedSeconds: number;
   initialize: (ownerId: string, defaultFocusMinutes: number, today: string) => void;
   setFocusMinutes: (minutes: number) => void;
   selectPhase: (phase: TimerPhase, seconds: number) => void;
@@ -23,6 +24,7 @@ interface FocusTimerState {
   sync: () => void;
   consumeCompletion: () => void;
   advance: (phase: TimerPhase, seconds: number, completedFocus: number) => void;
+  markCommitted: (seconds: number) => void;
 }
 
 function secondsLeft(endsAt: number | null, fallback: number): number {
@@ -43,6 +45,7 @@ export const useFocusTimerStore = create<FocusTimerState>()(
       completedFocus: 0,
       sessionDay: "",
       completionPending: false,
+      committedSeconds: 0,
 
       initialize: (ownerId, defaultFocusMinutes, today) => {
         const state = get();
@@ -58,6 +61,7 @@ export const useFocusTimerStore = create<FocusTimerState>()(
             completedFocus: 0,
             sessionDay: today,
             completionPending: false,
+            committedSeconds: 0,
           });
           return;
         }
@@ -77,6 +81,7 @@ export const useFocusTimerStore = create<FocusTimerState>()(
           remainingSeconds: bounded * 60,
           endsAt: null,
           completionPending: false,
+          committedSeconds: 0,
         });
       },
 
@@ -88,6 +93,7 @@ export const useFocusTimerStore = create<FocusTimerState>()(
           running: false,
           endsAt: null,
           completionPending: false,
+          committedSeconds: 0,
         }),
 
       toggle: () => {
@@ -122,7 +128,11 @@ export const useFocusTimerStore = create<FocusTimerState>()(
           endsAt: null,
           remainingSeconds: state.durationSeconds,
           completionPending: false,
+          committedSeconds: 0,
         })),
+
+      markCommitted: (seconds) =>
+        set((state) => ({ committedSeconds: state.committedSeconds + seconds })),
 
       sync: () => {
         const state = get();
@@ -151,6 +161,7 @@ export const useFocusTimerStore = create<FocusTimerState>()(
           endsAt: null,
           completedFocus,
           completionPending: false,
+          committedSeconds: 0,
         }),
     }),
     { name: "personal-os-focus-timer" }

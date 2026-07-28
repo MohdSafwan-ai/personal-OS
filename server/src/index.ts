@@ -3,11 +3,11 @@ import { env } from "./config/env.js";
 import { createApp } from "./app.js";
 
 async function main() {
-  await connectDatabase();
   const app = createApp();
   app.listen(env.PORT, () => {
     console.log(`✓ API listening on http://localhost:${env.PORT}`);
   });
+  await connectDatabase();
 }
 
 main().catch((err) => {

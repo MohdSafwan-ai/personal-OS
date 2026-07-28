@@ -9,7 +9,7 @@ import type {
 } from "./habit.validation.js";
 
 export async function listHabits(req: Request, res: Response): Promise<void> {
-  const habits = await Habit.find({ userId: req.userId }).sort({ createdAt: 1 });
+  const habits = await Habit.find({ userId: req.userId }).sort({ createdAt: 1 }).limit(100);
   res.json({ habits: habits.map(toPublicHabit) });
 }
 

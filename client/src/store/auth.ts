@@ -57,13 +57,12 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
   bootstrap: async () => {
     try {
-      const refresh = await api<{ accessToken: string }>("/api/auth/refresh", {
-        method: "POST",
-        skipRefresh: true,
-      });
-      setAccessToken(refresh.accessToken);
-      const me = await api<{ user: PublicUser }>("/api/auth/me");
-      set({ user: me.user, initializing: false });
+      const { accessToken, user } = await api<{ accessToken: string; user: PublicUser }>(
+        "/api/auth/refresh",
+        { method: "POST", skipRefresh: true }
+      );
+      setAccessToken(accessToken);
+      set({ user, initializing: false });
     } catch {
       set({ user: null, initializing: false });
     }

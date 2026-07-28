@@ -87,18 +87,6 @@ export async function rotateRefreshToken(
     expiresAt: refreshExpiry(),
   });
 
-  const claimStillValid = await RefreshToken.exists({
-    _id: existing._id,
-    replacedByHash: nextHash,
-  });
-  if (!claimStillValid) {
-    await RefreshToken.updateMany(
-      { familyId: existing.familyId, revokedAt: null },
-      { revokedAt: new Date() }
-    );
-    return null;
-  }
-
   return { token: next, userId: existing.userId.toString() };
 }
 
